@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/api/decode", "dest": "/api/decode.js" },
+    { "src": "/(.*)",       "dest": "/public/$1"     }
+  ]
+}
