@@ -2,14 +2,34 @@ const { createClient } = require("@supabase/supabase-js");
 const { decodeHaier } = require("../decode/decodeHaier");
 const { decodeCandyHoover } = require("../decode/decodeCandyHoover");
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+function normalizeSupabaseUrl(url) {
+  if (!url) return "";
+  return url.trim().replace(/\/rest\/v1\/?$/i, "").replace(/\/$/, "");
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido." });
+  }
+
+  const supabaseUrl = normalizeSupabaseUrl(process.env.SUPABASE_URL);
+  const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || "").trim();
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return res.status(500).json({
+      error: "Configuração em falta no servidor (SUPABASE_URL / SUPABASE_ANON_KEY).",
+    });
+  }
+
+  let supabase;
+  try {
+    // Força validação do formato da URL para evitar crash opaco no runtime.
+    new URL(supabaseUrl);
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+  } catch (e) {
+    return res.status(500).json({
+      error: "SUPABASE_URL inválida na configuração do servidor.",
+    });
   }
 
   const raw = (req.body && req.body.code) || "";

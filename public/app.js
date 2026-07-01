@@ -57,11 +57,22 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
       });
-      const data = await res.json();
+
+      const text = await res.text();
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (_) {
+        data = null;
+      }
+
       if (!res.ok) {
-        setError(data.error || "Não foi possível descodificar o código.");
+        setError(
+          (data && data.error) ||
+          `Erro ${res.status} ao descodificar o código.`
+        );
       } else {
-        setResult(data);
+        setResult(data || {});
       }
     } catch (err) {
       setError("Não foi possível ligar ao servidor.");
